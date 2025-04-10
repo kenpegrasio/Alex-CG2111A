@@ -52,13 +52,24 @@ volatile unsigned long rightRevs;
 volatile unsigned long forwardDist;
 volatile unsigned long reverseDist;
 
+// Time data for timed-based movement
 unsigned long targetTime;
 
+// Alex feature data
 float alexDiagonal = 0.0;
 float alexCirc = 0.0;
 
+// Servo 
 Servo servo1;
 Servo servo2;
+
+// Color sensor pin
+#define S0 30
+#define S1 31
+#define S2 32
+#define S3 33
+#define sensorOut 34
+int frequency = 0;
 
 /*
  * 
@@ -108,6 +119,28 @@ void sendStatus()
   statusPacket.params[8] = forwardDist;
   statusPacket.params[9] = reverseDist;
   sendResponse(&statusPacket);
+}
+
+void sendColorInformation()
+{
+  TPacket colorPacket;
+  colorPacket.packetType = PACKET_TYPE_RESPONSE;
+  colorPacket.command = RESP_COLOR;
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, LOW);
+  frequency = pulseIn(sensorOut, LOW);
+  colorPacket.params[0] = frequency;
+  delay(100);
+  digitalWrite(S2, HIGH);
+  digitalWrite(S3, HIGH);
+  frequency = pulseIn(sensorOut, LOW);
+  colorPacket.params[1] = frequency;
+  delay(100);
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, HIGH);
+  frequency = pulseIn(sensorOut, LOW);
+  colorPacket.params[2] = frequency;
+  sendResponse(&colorPacket);
 }
 
 void sendMessage(const char *message)
@@ -344,19 +377,21 @@ void clearOneCounter(int which)
 {
   clearCounters();
 }
-// Intialize Alex's internal states
 
+// Intialize Alex's internal states
 void initializeState()
 {
   clearCounters();
 }
 
+// Function to make the servo kiap
 void trigger_servo() 
 {
   servo1.write(90);
   servo2.write(180);
 }
 
+// Function to reset servo
 void reset_servo() 
 {
   servo1.write(180);
@@ -370,6 +405,11 @@ void handleCommand(TPacket *command)
     case COMMAND_GET_STATS: 
       sendOK();
       sendStatus();
+      break;
+    
+    case COMMAND_GET_COLOR_INFORMATION:
+      sendOK();
+      sendColorInformation();
       break;
 
     case COMMAND_CLEAR_STATS:
@@ -446,10 +486,21 @@ void waitForHello()
 }
 
 void setup() {
-  // put your setup code here, to run once:
+  // Setting up servo
   servo1.attach(LEFT_SERVO);
   servo2.attach(RIGHT_SERVO);
-  trigger_servo();
+  reset_servo();
+
+  // Setting up color sensor
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  pinMode(sensorOut, INPUT);
+
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+
   alexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH * ALEX_BREADTH));
   alexCirc = PI  * alexDiagonal;
   cli();

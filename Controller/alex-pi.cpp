@@ -47,6 +47,15 @@ void handleStatus(TPacket *packet)
 	printf("\n---------------------------------------\n\n");
 }
 
+void handleColor(TPacket *packet) 
+{
+	printf("\n ------- ALEX COLOR SENSOR DATA ------- \n\n");
+	printf("Red:\t\t%d\n", packet->params[0]);
+	printf("Green:\t\t%d\n", packet->params[1]);
+	printf("Blue:\t\t%d\n", packet->params[2]);
+	printf("\n---------------------------------------\n\n");
+}
+
 void handleResponse(TPacket *packet)
 {
 	// The response code is stored in command
@@ -54,11 +63,15 @@ void handleResponse(TPacket *packet)
 	{
 		case RESP_OK:
 			printf("Command OK\n");
-		break;
+			break;
 
 		case RESP_STATUS:
 			handleStatus(packet);
-		break;
+			break;
+
+		case RESP_COLOR:
+			handleColor(packet);
+			break;
 
 		default:
 			printf("Arduino is confused\n");
@@ -226,6 +239,12 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
+		case 'f':
+		case 'F':
+			commandPacket.command = COMMAND_GET_COLOR_INFORMATION;
+			sendPacket(&commandPacket);
+			break;
+
 		default:
 			printf("Bad command\n");
 
@@ -256,8 +275,7 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (c=clear stats, g=get stats q=exit p=trigger servo o=reset servo)\n");
-		printf("Command (w=forward a=turn left x=backward d=turn right)\n");
+		printf("Command (w=forward a=turn left x=backward d=turn right c=clear stats, g=get stats p=trigger servo o=reset servo q=exit f=get color data)\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream
