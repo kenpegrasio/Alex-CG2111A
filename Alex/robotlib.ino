@@ -54,65 +54,47 @@ void move(float speed, int direction)
     }
 }
 
-void forward(float dist, float speed)
-{
-  if (dist > 0) 
-    deltaDist = dist;
-  else
-    deltaDist = 9999999;
-  
-  newDist = forwardDist + deltaDist;
-
-  dir = (TDirection) FORWARD;
-  move(speed, FORWARD);
-}
-
-void backward(float dist, float speed)
-{
-  if (dist > 0) 
-    deltaDist = dist;
-  else
-    deltaDist = 9999999;
-
-  newDist = reverseDist + deltaDist;
-
-  dir = (TDirection) BACKWARD;
-  move(speed, BACKWARD);
-}
-
-unsigned long computeDeltaTicks (float ang) {
-  unsigned long ticks = (unsigned long) 3 * ((ang * alexCirc * COUNTS_PER_REV) / (360.0 * WHEEL_CIRC));
-  return ticks;
-}
-
-void ccw(float ang, float speed)
-{
-  if (ang == 0) {
-    deltaTicks = 9999999;
-  }
-  else {
-    deltaTicks = computeDeltaTicks(ang);
-  }
-  targetTicks = deltaTicks + leftReverseTicksTurns;
-  dir = (TDirection) LEFT;
-  move(speed, LEFT);
-}
-
-void cw(float ang, float speed)
-{
-  if (ang == 0) {
-    deltaTicks = 9999999;
-  }
-  else {
-    deltaTicks = computeDeltaTicks(ang);
-  }
-  targetTicks = deltaTicks + rightReverseTicksTurns;
-  dir = (TDirection) RIGHT;
-  move(speed, RIGHT);
-}
-
 void stop()
 {
   move(0, STOP);
 }
 
+void forwardForTime(unsigned long timeMs, float speed) {
+  if (timeMs == 0) return;
+  
+  unsigned long startTime = millis();
+  targetTime = startTime + timeMs;
+  
+  dir = (TDirection) FORWARD;
+  move(speed, FORWARD);
+}
+
+void backwardForTime(unsigned long timeMs, float speed) {
+  if (timeMs == 0) return;
+  
+  unsigned long startTime = millis();
+  targetTime = startTime + timeMs;
+  
+  dir = (TDirection) BACKWARD;
+  move(speed, BACKWARD);
+}
+
+void ccwForTime(unsigned long timeMs, float speed) {
+  if (timeMs == 0) return;
+  
+  unsigned long startTime = millis();
+  targetTime = startTime + timeMs;
+  
+  dir = (TDirection) LEFT;
+  move(speed, LEFT);
+}
+
+void cwForTime(unsigned long timeMs, float speed) {
+  if (timeMs == 0) return;
+  
+  unsigned long startTime = millis();
+  targetTime = startTime + timeMs;
+  
+  dir = (TDirection) RIGHT;
+  move(speed, RIGHT);
+}

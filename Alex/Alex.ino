@@ -13,8 +13,6 @@
 // Number of ticks per revolution from the 
 // wheel encoder.
 
-
-#define PI 3.141592654 
 #define ALEX_LENGTH 26
 #define ALEX_BREADTH 15
 
@@ -24,7 +22,7 @@
 // We will use this to calculate forward/backward distance traveled 
 // by taking revs * WHEEL_CIRC
 
-#define WHEEL_CIRC          20
+#define WHEEL_CIRC   20
 #define LEFT_SERVO   44
 #define RIGHT_SERVO  46
 
@@ -54,13 +52,7 @@ volatile unsigned long rightRevs;
 volatile unsigned long forwardDist;
 volatile unsigned long reverseDist;
 
-//variables to keep track of how far we move a commanded distance
-unsigned long deltaDist;
-unsigned long newDist;
-
-//keep track of turning angle
-unsigned long deltaTicks;
-unsigned long targetTicks;
+unsigned long targetTime;
 
 float alexDiagonal = 0.0;
 float alexCirc = 0.0;
@@ -128,13 +120,6 @@ void sendMessage(const char *message)
   sendResponse(&messagePacket);
 }
 
-void dbprintf(const char *format, ...) { 
-  va_list args; 
-  char buffer[128]; 
-  va_start(args, format); 
-  vsprintf(buffer, format, args); 
-  sendMessage(buffer);  
-} 
 
 void sendBadPacket()
 {
@@ -290,7 +275,7 @@ ISR(INT3_vect) {
 void setupSerial()
 {
   // To replace later with bare-metal.
-Serial.begin(9600);
+  Serial.begin(9600);
   // Change Serial to Serial2/Serial3/Serial4 in later labs when using the other UARTs
 }
 
@@ -327,7 +312,7 @@ int readSerial(char *buffer)
 
 void writeSerial(const char *buffer, int len)
 {
-//  Serial.write(buffer, len);
+  Serial.write(buffer, len);
   // Change Serial to Serial2/Serial3/Serial4 in later labs when using other UARTs
 }
 
@@ -381,51 +366,45 @@ void reset_servo()
 void handleCommand(TPacket *command)
 {
   switch(command->command)
-  {
-    // For movement commands, param[0] = distance, param[1] = speed.
-    case COMMAND_FORWARD:
-        sendOK();
-        forward((double) command->params[0], (float) command->params[1]);
-      break;
-    
-    case COMMAND_TURN_LEFT:
-        sendOK();
-        ccw((double) command->params[0], (float) command->params[1]);
-      break;
-      
-    case COMMAND_REVERSE:
-        sendOK();
-        backward((double) command->params[0], (float) command->params[1]);
-      break;
-
-    case COMMAND_TURN_RIGHT:
-        sendOK();
-        cw((double) command->params[0], (float) command->params[1]);
-      break;
-
-    case COMMAND_STOP:
-        sendOK();
-        stop();
-      break;
-        
+  {     
     case COMMAND_GET_STATS: 
-        sendOK();
-        sendStatus();
+      sendOK();
+      sendStatus();
       break;
 
     case COMMAND_CLEAR_STATS:
-        sendOK();
-        clearOneCounter(command->params[0]);
+      sendOK();
+      clearOneCounter(command->params[0]);
       break;
 
     case COMMAND_TRIGGER_SERVO:
-        sendOK();
-        trigger_servo();
+      sendOK();
+      trigger_servo();
       break;
     
     case COMMAND_RESET_SERVO:
-        sendOK();
-        reset_servo();
+      sendOK();
+      reset_servo();
+      break;
+
+    case COMMAND_WASD_W:
+      sendOK();
+      forwardForTime(250, 100);
+      break;
+    
+    case COMMAND_WASD_D:
+      sendOK();
+      cwForTime(1000, 100);
+      break;
+    
+    case COMMAND_WASD_X:
+      sendOK();
+      backwardForTime(250, 100);
+      break;
+    
+    case COMMAND_WASD_A:
+      sendOK();
+      ccwForTime(1000, 100);
       break;
 
     default:
@@ -457,14 +436,12 @@ void waitForHello()
       else
         sendBadResponse();
     }
-    else
-      if(result == PACKET_BAD)
-      {
-        sendBadPacket();
-      }
-      else
-        if(result == PACKET_CHECKSUM_BAD)
-          sendBadChecksum();
+    else if(result == PACKET_BAD)
+    {
+      sendBadPacket();
+    }
+    else if(result == PACKET_CHECKSUM_BAD)
+      sendBadChecksum();
   } // !exit
 }
 
@@ -507,15 +484,8 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-// Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
-
- //forward(0, 100);
-
-// Uncomment the code below for Week 9 Studio 2
- dbprintf("PI is ");
-
  // put your main code here, to run repeatedly:
-  TPacket recvPacket; // This holds commands from the Pi
+  TPacket recvPacket;
 
   TResult result = readPacket(&recvPacket);
   
@@ -533,53 +503,7 @@ void loop() {
     }
   }
 
-  if(deltaDist > 0) { 
-    if(dir==FORWARD) { 
-      if(forwardDist > newDist) { 
-        deltaDist=0; 
-        newDist=0; 
-        stop(); 
-      } 
-    } 
-    else if(dir == BACKWARD) { 
-      if(reverseDist > newDist) { 
-        deltaDist=0; 
-        newDist=0; 
-        stop(); 
-      } 
-    } 
-    else if(dir == STOP) { 
-      deltaDist=0; 
-      newDist=0; 
-      stop(); 
-    } 
-  }      
-  
-  if (deltaTicks > 0) 
-  {
-      if (dir == LEFT)
-      {
-          if (leftReverseTicksTurns >= targetTicks)
-          {
-              deltaTicks = 0;
-              targetTicks = 0;
-              stop();
-          }
-      }
-      else if (dir == RIGHT)
-      {
-          if (rightReverseTicksTurns >= targetTicks)
-          {
-              deltaTicks = 0;
-              targetTicks = 0;
-              stop();
-          }
-      }
-      else if (dir == STOP)
-      {
-          deltaTicks = 0;
-          targetTicks = 0;
-          stop();
-      }
+  if (millis() >= targetTime) {
+    stop();
   }
 }
