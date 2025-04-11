@@ -25,6 +25,7 @@
 #define WHEEL_CIRC   20
 #define LEFT_SERVO   44
 #define RIGHT_SERVO  46
+#define MEDPACK_SERVO 45
 
 /*
  *    Alex's State Variables
@@ -59,9 +60,12 @@ unsigned long targetTime;
 float alexDiagonal = 0.0;
 float alexCirc = 0.0;
 
-// Servo 
+// Servo for robotic arm
 Servo servo1;
 Servo servo2;
+
+// Servo for dropping the medpack
+Servo servo3;
 
 // Color sensor pin
 #define S0 30
@@ -398,6 +402,16 @@ void reset_servo()
   servo2.write(90);
 }
 
+// Function to drop the medpack
+void drop_medpack() {
+  servo3.write(90);
+}
+
+// Function to reset servo position for medpack
+void reset_medpack() {
+  servo3.write(180);
+}
+
 void handleCommand(TPacket *command)
 {
   switch(command->command)
@@ -446,6 +460,16 @@ void handleCommand(TPacket *command)
       sendOK();
       ccwForTime(1000, 100);
       break;
+    
+    case COMMAND_DROP_MEDPACK:
+      sendOK();
+      drop_medpack();
+      break;
+
+    case COMMAND_RESET_MEDPACK:
+      sendOK();
+      reset_medpack();
+      break;
 
     default:
       sendBadCommand();
@@ -489,7 +513,9 @@ void setup() {
   // Setting up servo
   servo1.attach(LEFT_SERVO);
   servo2.attach(RIGHT_SERVO);
+  servo3.attach(MEDPACK_SERVO);
   reset_servo();
+  reset_medpack();
 
   // Setting up color sensor
   pinMode(S0, OUTPUT);

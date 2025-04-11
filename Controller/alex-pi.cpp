@@ -1,3 +1,5 @@
+// To compile run: gcc alex-pi.cpp serial.cpp serialize.cpp –pthread –o alex-pi
+
 #include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -244,6 +246,18 @@ void sendCommand(char command)
 			commandPacket.command = COMMAND_GET_COLOR_INFORMATION;
 			sendPacket(&commandPacket);
 			break;
+		
+		case 'h':
+		case 'H':
+			commandPacket.command = COMMAND_DROP_MEDPACK;
+			sendPacket(&commandPacket);
+			break;
+
+		case 'u':
+		case 'U':
+			commandPacket.command = COMMAND_RESET_MEDPACK;
+			sendPacket(&commandPacket);
+			break;
 
 		default:
 			printf("Bad command\n");
@@ -275,7 +289,7 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (w=forward a=turn left x=backward d=turn right c=clear stats, g=get stats p=trigger servo o=reset servo q=exit f=get color data)\n");
+		printf("Command (w=forward a=turn left x=backward d=turn right c=clear stats, g=get stats p=trigger servo o=reset servo q=exit f=get color data h=drop medpack u=reset medpack servo)\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream
