@@ -27,7 +27,7 @@ The controller is the middle layer that receives commands (via TLS) and forwards
 1. Make sure your **Raspberry Pi** has GCC installed.
 2. SSH into the Raspberry Pi (or use VNC):
    ```bash
-   ssh pi@<rpi-ip-address>
+   ssh <rpi-username>@<rpi-ip-address>
    ```
 3. Compile the controller code:
    ```bash
